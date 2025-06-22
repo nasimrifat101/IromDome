@@ -1,0 +1,30 @@
+{
+  "rocket": {
+    "width": 6,
+    "height": 18,
+    "color": "red",
+    "speedRange": [1, 2],
+    "trajectory": "straightDown"
+  },
+  "missile": {
+    "width": 8,
+    "height": 20,
+    "color": "darkred",
+    "speedRange": [1.5, 3],
+    "trajectory": "zigzag"
+  },
+  "drone": {
+    "width": 10,
+    "height": 10,
+    "color": "gray",
+    "speedRange": [0.5, 1],
+    "trajectory": "slowHover"
+  },
+  "fastMissile": {
+    "width": 7,
+    "height": 19,
+    "color": "orange",
+    "speedRange": [2.5, 4],
+    "trajectory": "straightDownFast"
+  }
+}

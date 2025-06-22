@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "x": 120,
+    "y": 0,
+    "speed": 1.2,
+    "type": "rocket",
+    "threatLevel": 5
+  },
+  {
+    "id": 2,
+    "x": 320,
+    "y": 0,
+    "speed": 1.5,
+    "type": "missile",
+    "threatLevel": 8
+  },
+  {
+    "id": 3,
+    "x": 500,
+    "y": 0,
+    "speed": 1.1,
+    "type": "rocket",
+    "threatLevel": 4
+  },
+  {
+    "id": 4,
+    "x": 700,
+    "y": 0,
+    "speed": 1.3,
+    "type": "drone",
+    "threatLevel": 6
+  }
+]

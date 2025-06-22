@@ -1,0 +1,50 @@
+.missile {
+  width: 6px;
+  height: 18px;
+  background-color: #e53935; /* bright red */
+  border-radius: 2px;
+  box-shadow:
+    0 0 6px #ff5252,
+    inset 0 0 4px #b71c1c;
+  position: absolute;
+  transition: transform 0.1s linear;
+}
+
+.interceptor {
+  width: 6px;
+  height: 15px;
+  background-color: #1e88e5; /* bright blue */
+  border-radius: 2px;
+  box-shadow:
+    0 0 6px #448aff,
+    inset 0 0 4px #0d47a1;
+  position: absolute;
+  transition: transform 0.1s linear;
+}
+
+/* Optional glow on hover or active */
+.missile:hover,
+.interceptor:hover {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
+  cursor: pointer;
+}
+
+/* Exploding or hit animation (optional) */
+.explosion {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 87, 34, 0.8) 0%, transparent 70%);
+  animation: explode 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes explode {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
