@@ -12,7 +12,7 @@ const Missile = ({ missile }) => {
         <span className="font-semibold">Position:</span> ({missile.x.toFixed(1)}, {missile.y.toFixed(1)})
       </p>
       <p>
-        <span className="font-semibold">Speed:</span> {missile.speed.toFixed(2)} px/frame
+        <span className="font-semibold">Speed:</span> {missile.speed.toFixed(2)} kmph
       </p>
     </div>
   );

@@ -5,8 +5,8 @@ import HUD from "../components/HUD";
 import ControlPanel from "../components/ControlPanel";
 import Radar from "../components/Radar";
 
-const WIDTH = 800;
-const HEIGHT = 600;
+const WIDTH = 1100;
+const HEIGHT = 800;
 const COLLISION_RADIUS = 18;
 
 const Canvas = () => {
@@ -14,12 +14,14 @@ const Canvas = () => {
   const missilesRef = useRef([]);
   const interceptorsRef = useRef([]);
   const explosionsRef = useRef([]);
+  const civilianAircraftRef = useRef([]);
   const sweepAngleRef = useRef(0);
 
   const [tick, setTick] = useState(0);
   const [displayMissiles, setDisplayMissiles] = useState([]);
   const [displayInterceptors, setDisplayInterceptors] = useState([]);
   const [displayExplosions, setDisplayExplosions] = useState([]);
+  const [displayCivilianAircraft, setDisplayCivilianAircraft] = useState([]);
 
   // Launch interceptor aimed at specific missile by id and coordinates
   const launchInterceptorAt = (targetId, targetX, targetY) => {
@@ -45,17 +47,29 @@ const Canvas = () => {
     });
   };
 
-  // Spawn missiles periodically
+  // Spawn missiles and civilian aircraft periodically
   useEffect(() => {
     const interval = setInterval(() => {
       setTick((prev) => prev + 1);
-      if (tick % 100 === 0) {
+
+      if (tick % 10 === 0) {
+        // Spawn missile
         missilesRef.current.push({
-          id: Date.now(),
+          id: Date.now() + Math.random(),
           x: Math.random() * (WIDTH - 20),
           y: 0,
-          speed: 0.3 + Math.random() * 0.5,
+          speed: 0.3 + Math.random() * 2,
           targeted: false,
+        });
+      }
+
+      if (tick % 100 === 0) {
+        // Spawn civilian aircraft less frequently
+        civilianAircraftRef.current.push({
+          id: Date.now() + Math.random(),
+          x: Math.random() * (WIDTH - 20),
+          y: 0,
+          speed: 0.2 + Math.random() * 5,
         });
       }
     }, 50);
@@ -69,7 +83,6 @@ const Canvas = () => {
     let animationId;
 
     const update = () => {
-      // Update radar sweep angle
       sweepAngleRef.current = (sweepAngleRef.current + 2) % 360;
 
       // Move missiles downward
@@ -77,15 +90,20 @@ const Canvas = () => {
         m.y += m.speed;
       });
 
+      // Move civilian aircraft downward
+      civilianAircraftRef.current.forEach((c) => {
+        c.y += c.speed;
+      });
+
       // Launch interceptors for missiles in range and not targeted yet
       missilesRef.current.forEach((m) => {
-        if (!m.targeted && m.y > HEIGHT - 200) { // detection range 200px
+        if (!m.targeted && m.y > HEIGHT - 400) {
           launchInterceptorAt(m.id, m.x, m.y);
           m.targeted = true;
         }
       });
 
-      // Move interceptors with homing towards targets
+      // Move interceptors with homing towards missile targets
       interceptorsRef.current.forEach((i) => {
         const target = missilesRef.current.find((m) => m.id === i.targetId);
         if (target) {
@@ -101,7 +119,7 @@ const Canvas = () => {
         i.y += i.vy;
       });
 
-      // Detect collisions between interceptors and missiles
+      // Detect collisions between interceptors and missiles only (ignore civilian aircraft)
       const newExplosions = [];
       const collidedInterceptors = new Set();
 
@@ -115,7 +133,6 @@ const Canvas = () => {
             newExplosions.push({ x: m.x, y: m.y, createdAt: Date.now() });
           }
         });
-        // Remove missile if hit or it has moved beyond canvas
         return !hit && m.y < HEIGHT;
       });
 
@@ -123,17 +140,23 @@ const Canvas = () => {
         (i) => !collidedInterceptors.has(i.id) && i.y > 0
       );
 
-      // Manage explosion display time (0.5 seconds)
+      // Remove civilian aircraft that have left the screen
+      civilianAircraftRef.current = civilianAircraftRef.current.filter(
+        (c) => c.y < HEIGHT
+      );
+
+      // Keep explosions only for 0.5 seconds
       const now = Date.now();
       explosionsRef.current = [
         ...explosionsRef.current,
         ...newExplosions,
       ].filter((e) => now - e.createdAt < 500);
 
-      // Update state for rendering
+      // Update React state for rendering
       setDisplayMissiles([...missilesRef.current]);
       setDisplayInterceptors([...interceptorsRef.current]);
       setDisplayExplosions([...explosionsRef.current]);
+      setDisplayCivilianAircraft([...civilianAircraftRef.current]);
     };
 
     const draw = () => {
@@ -141,15 +164,29 @@ const Canvas = () => {
 
       drawRadar(ctx, WIDTH, HEIGHT, sweepAngleRef.current);
 
+      // Draw missiles with emoji 🚀
+      ctx.font = "20px monospace";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "red";
       displayMissiles.forEach((missile) => {
-        drawMissile(ctx, missile);
+        ctx.fillText("🚀", missile.x, missile.y);
       });
 
+      // Draw civilian aircraft with emoji ✈️
+      ctx.font = "24px monospace";
+      ctx.fillStyle = "yellow";
+      displayCivilianAircraft.forEach(({ x, y }) => {
+        ctx.fillText("✈️", x, y);
+      });
+
+      // Draw interceptors as blue rectangles
+      ctx.fillStyle = "blue";
       displayInterceptors.forEach((interceptor) => {
-        ctx.fillStyle = "blue";
         ctx.fillRect(interceptor.x, interceptor.y, 6, 15);
       });
 
+      // Draw explosion text
       displayExplosions.forEach(({ x, y }) => {
         ctx.fillStyle = "yellow";
         ctx.font = "bold 14px monospace";
@@ -164,18 +201,29 @@ const Canvas = () => {
     };
 
     loop();
+
     return () => cancelAnimationFrame(animationId);
   }, [tick]);
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <canvas
-        ref={canvasRef}
-        width={WIDTH}
-        height={HEIGHT}
-        className="border-4 border-green-600 bg-black rounded-lg"
-      />
+    <div className="flex flex-row justify-center space-x-8 items-start">
+      {/* Left side: Canvas + HUD + Radar vertically */}
+      <div className="flex flex-col space-y-4">
+        <canvas
+          ref={canvasRef}
+          width={WIDTH}
+          height={HEIGHT}
+          className="border-4 border-green-600 bg-black rounded-lg"
+        />
+        <HUD
+          missilesCount={displayMissiles.length}
+          interceptorsCount={displayInterceptors.length}
+          sweepAngle={sweepAngleRef.current}
+        />
+        <Radar />
+      </div>
 
+      {/* Right side: Control Panel */}
       <ControlPanel
         missiles={displayMissiles}
         interceptors={displayInterceptors}
@@ -186,14 +234,6 @@ const Canvas = () => {
           }
         }}
       />
-
-      <HUD
-        missilesCount={displayMissiles.length}
-        interceptorsCount={displayInterceptors.length}
-        sweepAngle={sweepAngleRef.current}
-      />
-
-      <Radar />
     </div>
   );
 };
