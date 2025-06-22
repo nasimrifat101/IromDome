@@ -9,8 +9,9 @@ export const RADAR_SWEEP_SPEED = 2; // degrees per animation frame
 // Missile settings
 export const MISSILE_WIDTH = 6;
 export const MISSILE_HEIGHT = 18;
-export const MISSILE_MIN_SPEED = 1;
-export const MISSILE_MAX_SPEED = 2.5;
+export const MISSILE_MIN_SPEED = 0.1;
+export const MISSILE_MAX_SPEED = 0.2;
+
 
 // Interceptor settings
 export const INTERCEPTOR_WIDTH = 6;

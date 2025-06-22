@@ -1,116 +1,81 @@
-import React, { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { drawRadar } from "./drawRadar";
-import { drawMissile } from "./drawMissile";
-import { drawInterceptor } from "./drawInterceptor";
-
-import Radar from "./components/Radar";
-import HUD from "./components/HUD";
-import ControlPanel from "./components/ControlPanel";
-
-const WIDTH = 800;
-const HEIGHT = 600;
+import Radar from "../components/Radar";
+// import Missile from "../components/Missile";
+// import Interceptor from "../components/Interceptor";
+import HUD from "../components/HUD";
+import ControlPanel from "../components/ControlPanel";
+import useSimulation from "../hooks/useSimulation";
+import useKeyControls from "../hooks/useKeyControls";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "../logic/config";
 
 const Canvas = () => {
   const canvasRef = useRef(null);
-  const [missiles, setMissiles] = useState([{ id: 1, x: 100, y: 0, speed: 1 }]);
-  const [interceptors, setInterceptors] = useState([]);
-  const [tick, setTick] = useState(0);
-  const [sweepAngle, setSweepAngle] = useState(0);
+  const { missiles, interceptors, sweepAngle, launchInterceptor } = useSimulation();
 
-  // Launch a new interceptor missile
-  const launchInterceptor = () => {
-    setInterceptors((prev) => [...prev, { id: Date.now(), x: 400, y: 580, speed: 3 }]);
-  };
+  // Keyboard controls to launch interceptor on Space or L key
+  useKeyControls({
+    Space: () => launchInterceptor(),
+    KeyL: () => launchInterceptor(),
+  });
 
-  // Add a new enemy missile every few ticks
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTick((prev) => prev + 1);
-      if (tick % 100 === 0) {
-        const newMissile = {
-          id: Date.now(),
-          x: Math.random() * (WIDTH - 20),
-          y: 0,
-          speed: 1 + Math.random() * 1.5,
-        };
-        setMissiles((prev) => [...prev, newMissile]);
-      }
-    }, 50);
-    return () => clearInterval(interval);
-  }, [tick]);
-
+  // Draw loop using requestAnimationFrame
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
 
     let animationId;
 
     const draw = () => {
-      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      // Clear canvas
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      drawRadar(ctx, WIDTH, HEIGHT, sweepAngle);
+      // Draw radar with sweep
+      drawRadar(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, sweepAngle);
 
-      missiles.forEach((missile) => {
-        drawMissile(ctx, missile);
+      // Draw missiles
+      missiles.forEach(({ x, y }) => {
+        ctx.fillStyle = "red";
+        ctx.fillRect(x, y, 6, 18);
       });
 
-      interceptors.forEach((interceptor) => {
-        drawInterceptor(ctx, interceptor);
+      // Draw interceptors
+      interceptors.forEach(({ x, y }) => {
+        ctx.fillStyle = "blue";
+        ctx.fillRect(x, y, 6, 15);
       });
-    };
-
-    const update = () => {
-      setSweepAngle((prev) => (prev + 2) % 360);
-
-      setMissiles((prev) =>
-        prev
-          .map((m) => ({ ...m, y: m.y + m.speed }))
-          .filter((m) => m.y < HEIGHT)
-      );
-
-      setInterceptors((prev) =>
-        prev
-          .map((i) => ({ ...i, y: i.y - i.speed }))
-          .filter((i) => i.y > 0)
-      );
     };
 
     const loop = () => {
-      update();
       draw();
       animationId = requestAnimationFrame(loop);
     };
 
     loop();
+
     return () => cancelAnimationFrame(animationId);
   }, [missiles, interceptors, sweepAngle]);
 
   return (
-    <div className="flex min-h-screen bg-black p-4 space-x-6 relative">
-      {/* Main simulation canvas */}
-      <div className="relative">
-        <canvas
-          ref={canvasRef}
-          width={WIDTH}
-          height={HEIGHT}
-          className="border-2 border-green-500 bg-black rounded"
-        />
-        {/* HUD overlay */}
-        <HUD missilesCount={missiles.length} interceptorsCount={interceptors.length} sweepAngle={sweepAngle} />
-      </div>
-
-      {/* Right side panel */}
-      <div className="flex flex-col space-y-6 w-96">
-        {/* Radar display */}
-        <Radar />
-
-        {/* Control panel */}
-        <ControlPanel
-          missiles={missiles}
-          interceptors={interceptors}
-          onLaunchInterceptor={launchInterceptor}
-        />
-      </div>
+    <div className="flex flex-col items-center space-y-4">
+      <canvas
+        ref={canvasRef}
+        width={CANVAS_WIDTH}
+        height={CANVAS_HEIGHT}
+        className="border-4 border-green-600 bg-black rounded-lg"
+      />
+      <ControlPanel
+        missiles={missiles}
+        interceptors={interceptors}
+        onLaunchInterceptor={launchInterceptor}
+      />
+      <HUD
+        missilesCount={missiles.length}
+        interceptorsCount={interceptors.length}
+        sweepAngle={sweepAngle}
+      />
+      <Radar />
     </div>
   );
 };

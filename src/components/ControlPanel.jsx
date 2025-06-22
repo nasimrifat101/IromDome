@@ -3,8 +3,8 @@ import Missile from "./Missile";
 import Interceptor from "./Interceptor";
 
 const ControlPanel = ({
-  missiles,
-  interceptors,
+  missiles = [],
+  interceptors = [],
   onLaunchInterceptor,
 }) => {
   return (
@@ -44,5 +44,6 @@ const ControlPanel = ({
     </div>
   );
 };
+
 
 export default ControlPanel;
